@@ -1,6 +1,7 @@
-from utils import *
+from starter_code.utils import *
 
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 def sigmoid(x):
@@ -21,10 +22,12 @@ def neg_log_likelihood(data, theta, beta):
     :return: float
     """
     #####################################################################
-    # TODO:                                                             #
+    # wasTODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
     log_lklihood = 0.
+    for i in range(len(data["user_id"])):
+        log_lklihood += data["is_correct"][i] * (theta[data["user_id"][i]] - beta[data["question_id"][i]]) - np.log1p(np.exp(theta[data["user_id"][i]] - beta[data["question_id"][i]]))
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -49,10 +52,17 @@ def update_theta_beta(data, lr, theta, beta):
     :return: tuple of vectors
     """
     #####################################################################
-    # TODO:                                                             #
+    # wasTODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    pass
+
+    theta_copy = theta.copy()
+    beta_copy = beta.copy()
+
+    for i in range(len(data["user_id"])):
+        theta[data["user_id"][i]] += lr * (data["is_correct"][i] - np.exp(theta_copy[data["user_id"][i]] - beta_copy[data["question_id"][i]])/(1 + np.exp(theta_copy[data["user_id"][i]] - beta_copy[data["question_id"][i]])))
+        beta[data["question_id"][i]] += lr * (- data["is_correct"][i] + np.exp(theta_copy[data["user_id"][i]] - beta_copy[data["question_id"][i]])/(1 + np.exp(theta_copy[data["user_id"][i]] - beta_copy[data["question_id"][i]])))
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
@@ -72,21 +82,26 @@ def irt(data, val_data, lr, iterations):
     :param iterations: int
     :return: (theta, beta, val_acc_lst)
     """
-    # TODO: Initialize theta and beta.
-    theta = None
-    beta = None
+    # wasTODO: Initialize theta and beta.
+    theta = np.ones(542) * 0.1
+    beta = np.ones(1774) * 0.1
 
-    val_acc_lst = []
+    validation_log_likelihood = []
+    train_log_likelihood = []
 
     for i in range(iterations):
-        neg_lld = neg_log_likelihood(data, theta=theta, beta=beta)
-        score = evaluate(data=val_data, theta=theta, beta=beta)
-        val_acc_lst.append(score)
-        print("NLLK: {} \t Score: {}".format(neg_lld, score))
+        train_neg_lld = neg_log_likelihood(data, theta=theta, beta=beta)
+        train_log_likelihood.append(train_neg_lld)
+        validation_neg_lld = neg_log_likelihood(val_data, theta=theta, beta=beta)
+        validation_log_likelihood.append(validation_neg_lld)
+        score_train = evaluate(data=data, theta=theta, beta=beta)
+        score_validation = evaluate(data=val_data, theta=theta, beta=beta)
+        #val_acc_lst.append(score_train)
+        print("NLLK: {} \t Train Score: {} \t Validation Score: {}".format(train_neg_lld, score_train, score_validation))
         theta, beta = update_theta_beta(data, lr, theta, beta)
 
-    # TODO: You may change the return values to achieve what you want.
-    return theta, beta, val_acc_lst
+    # wasTODO: You may change the return values to achieve what you want.
+    return theta, beta, validation_log_likelihood, train_log_likelihood
 
 
 def evaluate(data, theta, beta):
@@ -116,20 +131,47 @@ def main():
     test_data = load_public_test_csv("../data")
 
     #####################################################################
-    # TODO:                                                             #
+    # wasTODO:                                                             #
     # Tune learning rate and number of iterations. With the implemented #
     # code, report the validation and test accuracy.                    #
     #####################################################################
-    pass
+    lr = 0.01
+    iterations = 30
+    theta, beta, validation_log_likelihood, training_log_likelihood = irt(train_data, val_data, lr, iterations)
+
+    plt.title("validation log likelihood")
+    plt.xlabel("iteration")
+    plt.ylabel("validation log likelihood")
+    plt.plot(range(iterations), validation_log_likelihood)
+    plt.show()
+
+    plt.title("training log likelihood")
+    plt.xlabel("iteration")
+    plt.ylabel("training log likelihood")
+    plt.plot(range(iterations), training_log_likelihood)
+    plt.show()
+
+    acc_test = evaluate(test_data, theta, beta)
+    print("Test Score: {}".format(acc_test))
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
 
     #####################################################################
-    # TODO:                                                             #
+    # wasTODO:                                                             #
     # Implement part (d)                                                #
     #####################################################################
-    pass
+    questions = np.array([150, 300, 450])
+    theta = theta.reshape(-1)
+    theta.sort()
+    for question in questions:
+        plt.plot(theta, np.exp(theta - beta[question]) / (1 + np.exp(theta - beta[question])), label=f"Question {question}")
+    plt.ylabel("Probability")
+    plt.xlabel("Theta")
+    plt.title("Probablity to theta")
+    plt.legend()
+    plt.show()
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################

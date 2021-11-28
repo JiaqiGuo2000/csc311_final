@@ -78,7 +78,7 @@ def main():
         plt.title("validation accuracy")
         plt.xlabel("k value")
         plt.ylabel("validation accuracy")
-        plt.plot(k_values, accs, "r--")
+        plt.plot(k_values, accs)
         plt.show()
         return
 
