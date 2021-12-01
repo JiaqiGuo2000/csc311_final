@@ -85,8 +85,8 @@ def update_u_z(train_data, lr, u, z):
     u_copy = u.copy()
     z_copy = z.copy()
 
-    u[n][0] -= lr * (c - u_copy[n][0] * z_copy[q][0]) * (- z_copy[q][0])
-    z[q][0] -= lr * (c - u_copy[n][0] * z_copy[q][0]) * (- u_copy[n][0])
+    u[n] -= lr * (c - np.matmul(u_copy[n], z_copy[q])) * (- z_copy[q])
+    z[q] -= lr * (c - np.matmul(u_copy[n], z_copy[q])) * (- u_copy[n])
 
     #####################################################################
     #                       END OF YOUR CODE                            #
@@ -151,15 +151,20 @@ def main():
     # using the validation set.                                         #
     #####################################################################
     k_values = [3, 5, 7, 9, 11, 13, 15]
+    max_k = 0
+    highest = 0
     for k in k_values:
         reconst_matrix = svd_reconstruct(train_matrix, k)
         val_acc = sparse_matrix_evaluate(val_data, reconst_matrix)
+        if val_acc > highest:
+            max_k = k
+            highest = val_acc
         print("k = {}, \t validation accuracy = {}".format(k, val_acc))
 
-    reconst_matrix = svd_reconstruct(train_matrix, 9)
+    reconst_matrix = svd_reconstruct(train_matrix, max_k)
     val_acc = sparse_matrix_evaluate(val_data, reconst_matrix)
     test_acc = sparse_matrix_evaluate(test_data, reconst_matrix)
-    print("final k = 9, \t validation accuracy = {}, \t test accuracy = {}".format(val_acc, test_acc))
+    print("final k = {}, \t validation accuracy = {}, \t test accuracy = {}".format(max_k, val_acc, test_acc))
 
     #####################################################################
     #                       END OF YOUR CODE                            #
@@ -171,28 +176,26 @@ def main():
     # using the validation set.                                         #
     #####################################################################
 
-    k_values = [1, 2, 3, 4, 5]
+    k_values = [3, 5, 7, 9, 11, 13, 15, 17, 19]
     lr = 0.05
     iterations = 100000
     final_matrix = None
     final_train_losses = []
     final_val_losses = []
+    max_k = 0
+    highest = 0
     for k in k_values:
-        if k == 1:
-            plot = True
-        else:
-            plot = False
-        reconst_matrix, train_losses, val_losses = als(train_data, k, lr, iterations, val_data, plot)
-        if k == 1:
-            final_matrix = reconst_matrix
-            final_train_losses = train_losses
-            final_val_losses = val_losses
+        reconst_matrix, train_losses, val_losses = als(train_data, k, lr, iterations, val_data, False)
         val_acc = sparse_matrix_evaluate(val_data, reconst_matrix)
+        if val_acc > highest:
+            highest = val_acc
+            max_k = k
         print("k = {}, \t validation accuracy = {}".format(k, val_acc))
 
+    final_matrix, final_train_losses, final_val_losses = als(train_data, max_k, lr, iterations, val_data, False)
     val_acc = sparse_matrix_evaluate(val_data, final_matrix)
     test_acc = sparse_matrix_evaluate(test_data, final_matrix)
-    print("final k = 1, \t validation accuracy = {}, \t test accuracy = {}".format(val_acc, test_acc))
+    print("final k = {}, \t validation accuracy = {}, \t test accuracy = {}".format(max_k, val_acc, test_acc))
 
     plt.ylabel("loss")
     plt.xlabel("iterations")

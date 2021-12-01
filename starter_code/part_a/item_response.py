@@ -69,7 +69,7 @@ def update_theta_beta(data, lr, theta, beta):
     return theta, beta
 
 
-def irt(data, val_data, lr, iterations):
+def irt(data, val_data, lr, iterations, quiet=False):
     """ Train IRT model.
 
     You may optionally replace the function arguments to receive a matrix.
@@ -80,6 +80,7 @@ def irt(data, val_data, lr, iterations):
     is_correct: list}
     :param lr: float
     :param iterations: int
+    :parar quiet: bool
     :return: (theta, beta, val_acc_lst)
     """
     # wasTODO: Initialize theta and beta.
@@ -97,7 +98,8 @@ def irt(data, val_data, lr, iterations):
         score_train = evaluate(data=data, theta=theta, beta=beta)
         score_validation = evaluate(data=val_data, theta=theta, beta=beta)
         #val_acc_lst.append(score_train)
-        print("NLLK: {} \t Train Score: {} \t Validation Score: {}".format(train_neg_lld, score_train, score_validation))
+        if not quiet:
+            print("NLLK: {} \t Train Score: {} \t Validation Score: {}".format(train_neg_lld, score_train, score_validation))
         theta, beta = update_theta_beta(data, lr, theta, beta)
 
     # wasTODO: You may change the return values to achieve what you want.
