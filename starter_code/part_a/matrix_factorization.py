@@ -1,4 +1,5 @@
-from utils import *
+from starter_code.utils import *
+from matplotlib import pyplot as plt
 from scipy.linalg import sqrtm
 
 import numpy as np
@@ -70,7 +71,7 @@ def update_u_z(train_data, lr, u, z):
     :return: (u, z)
     """
     #####################################################################
-    # TODO:                                                             #
+    # wasTODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
     # Randomly select a pair (user_id, question_id).
@@ -80,13 +81,20 @@ def update_u_z(train_data, lr, u, z):
     c = train_data["is_correct"][i]
     n = train_data["user_id"][i]
     q = train_data["question_id"][i]
+
+    u_copy = u.copy()
+    z_copy = z.copy()
+
+    u[n][0] -= lr * (c - u_copy[n][0] * z_copy[q][0]) * (- z_copy[q][0])
+    z[q][0] -= lr * (c - u_copy[n][0] * z_copy[q][0]) * (- u_copy[n][0])
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
     return u, z
 
 
-def als(train_data, k, lr, num_iteration):
+def als(train_data, k, lr, num_iteration, val_data=None, plot=False):
     """ Performs ALS algorithm, here we use the iterative solution - SGD 
     rather than the direct solution.
 
@@ -95,6 +103,7 @@ def als(train_data, k, lr, num_iteration):
     :param k: int
     :param lr: float
     :param num_iteration: int
+    :param plot: bool
     :return: 2D reconstructed Matrix.
     """
     # Initialize u and z
@@ -104,14 +113,30 @@ def als(train_data, k, lr, num_iteration):
                           size=(len(set(train_data["question_id"])), k))
 
     #####################################################################
-    # TODO:                                                             #
+    # wasTODO:                                                             #
     # Implement the function as described in the docstring.             #
     #####################################################################
-    mat = None
+    train_losses = []
+    val_losses = []
+    for iteration in range(num_iteration):
+        u, z = update_u_z(train_data, lr, u, z)
+        train_loss = 0
+        val_loss = 0
+        if plot:
+            print(iteration)
+            for i in range(len(train_data["question_id"])):
+                train_loss += 0.5 * ((train_data["is_correct"][i] - u[train_data["user_id"][i]][0] * z[train_data["question_id"][i]][0]) ** 2)
+            for i in range(len(val_data["question_id"])):
+                val_loss += 0.5 * ((val_data["is_correct"][i] - u[val_data["user_id"][i]][0] * z[val_data["question_id"][i]][0]) ** 2)
+            train_losses.append(train_loss)
+            val_losses.append(val_loss)
+
+    mat = np.matmul(u, z.T)
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
-    return mat
+    return mat, train_losses, val_losses
 
 
 def main():
@@ -121,21 +146,62 @@ def main():
     test_data = load_public_test_csv("../data")
 
     #####################################################################
-    # TODO:                                                             #
+    # wasTODO:                                                             #
     # (SVD) Try out at least 5 different k and select the best k        #
     # using the validation set.                                         #
     #####################################################################
-    pass
+    k_values = [3, 5, 7, 9, 11, 13, 15]
+    for k in k_values:
+        reconst_matrix = svd_reconstruct(train_matrix, k)
+        val_acc = sparse_matrix_evaluate(val_data, reconst_matrix)
+        print("k = {}, \t validation accuracy = {}".format(k, val_acc))
+
+    reconst_matrix = svd_reconstruct(train_matrix, 9)
+    val_acc = sparse_matrix_evaluate(val_data, reconst_matrix)
+    test_acc = sparse_matrix_evaluate(test_data, reconst_matrix)
+    print("final k = 9, \t validation accuracy = {}, \t test accuracy = {}".format(val_acc, test_acc))
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
 
     #####################################################################
-    # TODO:                                                             #
+    # wasTODO:                                                             #
     # (ALS) Try out at least 5 different k and select the best k        #
     # using the validation set.                                         #
     #####################################################################
-    pass
+
+    k_values = [1, 2, 3, 4, 5]
+    lr = 0.05
+    iterations = 100000
+    final_matrix = None
+    final_train_losses = []
+    final_val_losses = []
+    for k in k_values:
+        if k == 1:
+            plot = True
+        else:
+            plot = False
+        reconst_matrix, train_losses, val_losses = als(train_data, k, lr, iterations, val_data, plot)
+        if k == 1:
+            final_matrix = reconst_matrix
+            final_train_losses = train_losses
+            final_val_losses = val_losses
+        val_acc = sparse_matrix_evaluate(val_data, reconst_matrix)
+        print("k = {}, \t validation accuracy = {}".format(k, val_acc))
+
+    val_acc = sparse_matrix_evaluate(val_data, final_matrix)
+    test_acc = sparse_matrix_evaluate(test_data, final_matrix)
+    print("final k = 1, \t validation accuracy = {}, \t test accuracy = {}".format(val_acc, test_acc))
+
+    plt.ylabel("loss")
+    plt.xlabel("iterations")
+    plt.plot(range(iterations), final_val_losses, label="validation error")
+    plt.plot(range(iterations), final_train_losses, label="training error")
+    plt.title("square error to iteration")
+    plt.legend()
+    plt.show()
+
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
