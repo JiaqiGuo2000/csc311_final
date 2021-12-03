@@ -71,8 +71,8 @@ def update_theta_beta(data, lr, theta, beta, randomness, slopes):
         y = beta_copy[data["question_id"][i]]
         theta[data["user_id"][i]] += lr * (k * np.exp(x)*((c-1)*k*np.exp(x) + (c - a) * np.exp(y)))/(k * np.exp(x) + np.exp(y)) / (k * np.exp(x) + a*np.exp(y))
         beta[data["question_id"][i]] += - lr * (k*np.exp(x)*((c-a)*np.exp(y)+(c-1)*k*np.exp(x)))/(k * np.exp(x) + np.exp(y)) / (k * np.exp(x) + a*np.exp(y))
-        slopes[data["question_id"][i]] += 0.2 * lr * (np.exp(y)*a - c*np.exp(y) + (1-c)*k*np.exp(x))/(a-1)/(np.exp(y)*a+k*np.exp(x))
-        randomness[data["question_id"][i]] += 0.1 * lr * np.exp(x)*((c-1)*k*np.exp(x)+(c-a)*np.exp(y))/(np.exp(x)*k+np.exp(y))/(np.exp(x)*k+a*np.exp(y))
+        slopes[data["question_id"][i]] += 0.1 * lr * (np.exp(y)*a - c*np.exp(y) + (1-c)*k*np.exp(x))/(a-1)/(np.exp(y)*a+k*np.exp(x))
+        randomness[data["question_id"][i]] += 0.05 * lr * np.exp(x)*((c-1)*k*np.exp(x)+(c-a)*np.exp(y))/(np.exp(x)*k+np.exp(y))/(np.exp(x)*k+a*np.exp(y))
     for i in range(len(data["user_id"])):
         if randomness[data["question_id"][i]] < 0:
             randomness[data["question_id"][i]] = 0
@@ -85,7 +85,7 @@ def update_theta_beta(data, lr, theta, beta, randomness, slopes):
     return theta, beta, randomness, slopes
 
 
-def irt(data, val_data, lr, iterations, quiet=False):
+def irt(data, val_data, test_data, lr, iterations, quiet=False):
     """ Train IRT model.
 
     You may optionally replace the function arguments to receive a matrix.
@@ -102,7 +102,7 @@ def irt(data, val_data, lr, iterations, quiet=False):
     # wasTODO: Initialize theta and beta.
     theta = np.ones(542) * 0.1
     beta = np.ones(1774) * 0.1
-    randomness = np.ones(1774) * 0
+    randomness = np.ones(1774) * 0.0
     slopes= np.ones(1774) * 1.0
 
     validation_log_likelihood = []
@@ -116,10 +116,11 @@ def irt(data, val_data, lr, iterations, quiet=False):
         validation_log_likelihood.append(validation_neg_lld)
         score_train = evaluate(data=data, theta=theta, beta=beta, randomness=randomness, slopes=slopes)
         score_validation = evaluate(data=val_data, theta=theta, beta=beta, randomness=randomness, slopes=slopes)
+        score_test = evaluate(data=test_data, theta=theta, beta=beta, randomness=randomness, slopes=slopes)
         # val_acc_lst.append(score_train)
         if not quiet:
-            print("NLLK: {} \t Train Score: {} \t Validation Score: {}".format(
-                train_neg_lld, score_train, score_validation))
+            print("NLLK: {} \t Train Score: {} \t Validation Score: {} \t Test Score: {}".format(
+                train_neg_lld, score_train, score_validation, score_test))
         theta, beta, randomness, slopes = update_theta_beta(data, lr, theta, beta, randomness, slopes)
 
     # wasTODO: You may change the return values to achieve what you want.
@@ -160,24 +161,24 @@ def main():
     # code, report the validation and test accuracy.                    #
     #####################################################################
     lr = 0.01
-    iterations = 9
+    iterations = 50
     theta, beta, randomness, slopes, validation_log_likelihood, training_log_likelihood = irt(
-        train_data, val_data, lr, iterations)
+        train_data, val_data, test_data, lr, iterations)
 
-    plt.title("validation log likelihood")
-    plt.xlabel("iteration")
-    plt.ylabel("validation log likelihood")
-    plt.plot(range(iterations), validation_log_likelihood)
-    plt.show()
+    #plt.title("validation log likelihood")
+    #plt.xlabel("iteration")
+    #plt.ylabel("validation log likelihood")
+    #plt.plot(range(iterations), validation_log_likelihood)
+    #plt.show()
 
-    plt.title("training log likelihood")
-    plt.xlabel("iteration")
-    plt.ylabel("training log likelihood")
-    plt.plot(range(iterations), training_log_likelihood)
-    plt.show()
+    #plt.title("training log likelihood")
+    #plt.xlabel("iteration")
+    #plt.ylabel("training log likelihood")
+    #plt.plot(range(iterations), training_log_likelihood)
+    #plt.show()
 
-    acc_test = evaluate(test_data, theta, beta, randomness, slopes)
-    print("Test Score: {}".format(acc_test))
+    #acc_test = evaluate(test_data, theta, beta, randomness, slopes)
+    #print("Test Score: {}".format(acc_test))
     #####################################################################
     #                       END OF YOUR CODE                            #
     #####################################################################
