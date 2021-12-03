@@ -75,8 +75,7 @@ def update_u_z(train_data, lr, u, z):
     # Implement the function as described in the docstring.             #
     #####################################################################
     # Randomly select a pair (user_id, question_id).
-    i = \
-        np.random.choice(len(train_data["question_id"]), 1)[0]
+    i = np.random.choice(len(train_data["question_id"]), 1)[0]
 
     c = train_data["is_correct"][i]
     n = train_data["user_id"][i]
@@ -84,9 +83,9 @@ def update_u_z(train_data, lr, u, z):
 
     u_copy = u.copy()
     z_copy = z.copy()
-
-    u[n] -= lr * (c - np.matmul(u_copy[n], z_copy[q])) * (- z_copy[q])
-    z[q] -= lr * (c - np.matmul(u_copy[n], z_copy[q])) * (- u_copy[n])
+    diff = c - np.matmul(u_copy[n], z_copy[q])
+    u[n] -= lr * diff * (- z_copy[q])
+    z[q] -= lr * diff * (- u_copy[n])
 
     #####################################################################
     #                       END OF YOUR CODE                            #
@@ -95,7 +94,7 @@ def update_u_z(train_data, lr, u, z):
 
 
 def als(train_data, k, lr, num_iteration, val_data=None, plot=False):
-    """ Performs ALS algorithm, here we use the iterative solution - SGD 
+    """ Performs ALS algorithm, here we use the iterative solution - SGD
     rather than the direct solution.
 
     :param train_data: A dictionary {user_id: list, question_id: list,
@@ -125,9 +124,13 @@ def als(train_data, k, lr, num_iteration, val_data=None, plot=False):
         if plot:
             print(iteration)
             for i in range(len(train_data["question_id"])):
-                train_loss += 0.5 * ((train_data["is_correct"][i] - u[train_data["user_id"][i]][0] * z[train_data["question_id"][i]][0]) ** 2)
+                train_loss += 0.5 * ((train_data["is_correct"][i] -
+                                      u[train_data["user_id"][i]][0] *
+                                      z[train_data["question_id"][i]][0]) ** 2)
             for i in range(len(val_data["question_id"])):
-                val_loss += 0.5 * ((val_data["is_correct"][i] - u[val_data["user_id"][i]][0] * z[val_data["question_id"][i]][0]) ** 2)
+                val_loss += 0.5 * ((val_data["is_correct"][i] -
+                                    u[val_data["user_id"][i]][0] *
+                                    z[val_data["question_id"][i]][0]) ** 2)
             train_losses.append(train_loss)
             val_losses.append(val_loss)
 
@@ -192,7 +195,7 @@ def main():
             max_k = k
         print("k = {}, \t validation accuracy = {}".format(k, val_acc))
 
-    final_matrix, final_train_losses, final_val_losses = als(train_data, max_k, lr, iterations, val_data, False)
+    final_matrix, final_train_losses, final_val_losses = als(train_data, max_k, lr, iterations, val_data, True)
     val_acc = sparse_matrix_evaluate(val_data, final_matrix)
     test_acc = sparse_matrix_evaluate(test_data, final_matrix)
     print("final k = {}, \t validation accuracy = {}, \t test accuracy = {}".format(max_k, val_acc, test_acc))
