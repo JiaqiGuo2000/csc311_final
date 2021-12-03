@@ -71,8 +71,13 @@ def update_theta_beta(data, lr, theta, beta, randomness, slopes):
         y = beta_copy[data["question_id"][i]]
         theta[data["user_id"][i]] += lr * (k * np.exp(x)*((c-1)*k*np.exp(x) + (c - a) * np.exp(y)))/(k * np.exp(x) + np.exp(y)) / (k * np.exp(x) + a*np.exp(y))
         beta[data["question_id"][i]] += - lr * (k*np.exp(x)*((c-a)*np.exp(y)+(c-1)*k*np.exp(x)))/(k * np.exp(x) + np.exp(y)) / (k * np.exp(x) + a*np.exp(y))
-        slopes[data["question_id"][i]] += lr * (np.exp(y)*a - c*np.exp(y) + (1-c)*k*np.exp(x))/(a-1)/(np.exp(y)*a+k*np.exp(x))
-        #randomness[data["question_id"][i]] += lr * np.exp(x)*((c-1)*k*np.exp(x)+(c-a)*np.exp(y))/(np.exp(x)*k+np.exp(y))/(np.exp(x)*k+a*np.exp(y))
+        slopes[data["question_id"][i]] += 0.2 * lr * (np.exp(y)*a - c*np.exp(y) + (1-c)*k*np.exp(x))/(a-1)/(np.exp(y)*a+k*np.exp(x))
+        randomness[data["question_id"][i]] += 0.1 * lr * np.exp(x)*((c-1)*k*np.exp(x)+(c-a)*np.exp(y))/(np.exp(x)*k+np.exp(y))/(np.exp(x)*k+a*np.exp(y))
+    for i in range(len(data["user_id"])):
+        if randomness[data["question_id"][i]] < 0:
+            randomness[data["question_id"][i]] = 0
+        if randomness[data["question_id"][i]] >= 1:
+            randomness[data["question_id"][i]] = 0.9999
 
     #####################################################################
     #                       END OF YOUR CODE                            #
@@ -98,7 +103,7 @@ def irt(data, val_data, lr, iterations, quiet=False):
     theta = np.ones(542) * 0.1
     beta = np.ones(1774) * 0.1
     randomness = np.ones(1774) * 0
-    slopes= np.ones(1774) * 0.1
+    slopes= np.ones(1774) * 1.0
 
     validation_log_likelihood = []
     train_log_likelihood = []
@@ -153,7 +158,7 @@ def main():
     # code, report the validation and test accuracy.                    #
     #####################################################################
     lr = 0.01
-    iterations = 30
+    iterations = 9
     theta, beta, randomness, slopes, validation_log_likelihood, training_log_likelihood = irt(
         train_data, val_data, lr, iterations)
 
