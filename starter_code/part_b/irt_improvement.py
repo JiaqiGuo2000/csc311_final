@@ -1,4 +1,5 @@
 from starter_code.utils import *
+import starter_code.part_a.item_response
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -143,20 +144,32 @@ def main():
     theta, beta, randomness, slopes, validation_log_likelihood, training_log_likelihood = irt(
         train_data, val_data, lr, iterations)
 
+    lr_org = 0.01
+    iterations_org = 30
+    theta_org, beta_org, validation_log_likelihood_org, training_log_likelihood_org = starter_code.part_a.item_response.irt(
+        train_data, val_data, lr_org, iterations_org)
+
     plt.title("validation log likelihood")
     plt.xlabel("iteration")
     plt.ylabel("validation log likelihood")
-    plt.plot(range(iterations), validation_log_likelihood)
+    plt.plot(range(iterations), validation_log_likelihood, label="modified")
+    plt.plot(range(iterations_org), validation_log_likelihood_org, label="original")
+    plt.legend()
     plt.show()
 
     plt.title("training log likelihood")
     plt.xlabel("iteration")
     plt.ylabel("training log likelihood")
-    plt.plot(range(iterations), training_log_likelihood)
+    plt.plot(range(iterations), training_log_likelihood, label="modified")
+    plt.plot(range(iterations_org), training_log_likelihood_org, label="original")
+    plt.legend()
     plt.show()
 
     acc_test = evaluate(test_data, theta, beta, randomness, slopes)
-    print("Final Test Score: {}".format(acc_test))
+    print("Modified Final Test Score: {}".format(acc_test))
+
+    acc_test = starter_code.part_a.item_response.evaluate(test_data, theta_org, beta_org)
+    print("Original Final Test Score: {}".format(acc_test))
 
 
 if __name__ == "__main__":
