@@ -138,8 +138,10 @@ def evaluate(data, theta, beta, randomness, slopes):
     pred = []
     for i, q in enumerate(data["question_id"]):
         u = data["user_id"][i]
-        x = (theta[u] - beta[q]).sum()
-        p_a = sigmoid(x)
+        k = slopes[data["question_id"][i]]
+        a = randomness[data["question_id"][i]]
+        x = (theta[u] - beta[q]).sum() * k
+        p_a = sigmoid(x) * (1-a) + a
         pred.append(p_a >= 0.5)
     return np.sum((data["is_correct"] == np.array(pred))) \
            / len(data["is_correct"])
@@ -184,17 +186,17 @@ def main():
     # wasTODO:                                                             #
     # Implement part (d)                                                #
     #####################################################################
-    questions = np.array([150, 300, 450])
-    theta = theta.reshape(-1)
-    theta.sort()
-    for question in questions:
-        e = np.exp(theta - beta[question])
-        plt.plot(theta, e / (1 + e), label="Question {}".format(question))
-    plt.ylabel("Probability")
-    plt.xlabel("Theta")
-    plt.title("Probablity to theta")
-    plt.legend()
-    plt.show()
+    #questions = np.array([150, 300, 450])
+    #theta = theta.reshape(-1)
+    #theta.sort()
+    #for question in questions:
+    #    e = np.exp(theta - beta[question])
+    #    plt.plot(theta, e / (1 + e), label="Question {}".format(question))
+    #plt.ylabel("Probability")
+    #plt.xlabel("Theta")
+    #plt.title("Probablity to theta")
+    #plt.legend()
+    #plt.show()
 
     #####################################################################
     #                       END OF YOUR CODE                            #
