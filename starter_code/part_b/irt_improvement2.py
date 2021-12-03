@@ -119,8 +119,8 @@ def irt(data, val_data, test_data, lr, iterations, quiet=False):
         score_test = evaluate(data=test_data, theta=theta, beta=beta, randomness=randomness, slopes=slopes)
         # val_acc_lst.append(score_train)
         if not quiet:
-            print("NLLK: {} \t Train Score: {} \t Validation Score: {} \t Test Score: {}".format(
-                train_neg_lld, score_train, score_validation, score_test))
+            print("Iterations: {} \t NLLK: {} \t Train Score: {} \t Validation Score: {} \t Test Score: {}".format(
+                i+1, train_neg_lld, score_train, score_validation, score_test))
         theta, beta, randomness, slopes = update_theta_beta(data, lr, theta, beta, randomness, slopes)
 
     # wasTODO: You may change the return values to achieve what you want.
@@ -160,7 +160,7 @@ def main():
     # Tune learning rate and number of iterations. With the implemented #
     # code, report the validation and test accuracy.                    #
     #####################################################################
-    lr = 0.01
+    lr = 0.015
     iterations = 50
     theta, beta, randomness, slopes, validation_log_likelihood, training_log_likelihood = irt(
         train_data, val_data, test_data, lr, iterations)
