@@ -25,8 +25,12 @@ def neg_log_likelihood(data, theta, beta, randomness, slopes):
     """
     log_lklihood = 0.
     for i in range(len(data["user_id"])):
+        a = randomness[data["question_id"][i]]
+        k = slopes[data["question_id"][i]]
+        c = data["is_correct"][i]
         diff = theta[data["user_id"][i]] - beta[data["question_id"][i]]
-        log_lklihood += data["is_correct"][i] * diff - np.log1p(np.exp(diff))
+        frac = np.exp(diff * k)/ (1 + np.exp(diff * k))
+        log_lklihood += c * np.log(a + (1-a)*frac) + (1-c) * np.log(1-a- (1-a)*frac)
     return -log_lklihood
 
 
@@ -66,8 +70,8 @@ def update_theta_beta(data, lr, theta, beta, randomness, slopes):
                     (c - 1) * k * np.exp(x) + (c - a) * np.exp(y)) / (np.exp(x) * k + np.exp(y)) / (
                                                           np.exp(x) * k + a * np.exp(y))
     for i in range(len(data["user_id"])):
-        if randomness[data["question_id"][i]] < 0:
-            randomness[data["question_id"][i]] = 0
+        if randomness[data["question_id"][i]] <= 0:
+            randomness[data["question_id"][i]] = 0.0001
         if randomness[data["question_id"][i]] >= 1:
             randomness[data["question_id"][i]] = 0.9999
     return theta, beta, randomness, slopes
@@ -146,7 +150,12 @@ def main():
     val_data = load_valid_csv("../data")
     test_data = load_public_test_csv("../data")
 
-    write = False
+    write = True
+    lr = 0.015
+    iterations = 25
+    theta, beta, randomness, slopes, validation_log_likelihood, training_log_likelihood = irt(
+        train_data, val_data, lr, iterations)
+
     if write:
         rows = []
         with open('../data/private_test_data.csv') as f:
@@ -154,13 +163,6 @@ def main():
             for row in f_csv:
                 #print(row)
                 rows.append(row)
-
-    lr = 0.015
-    iterations = 46
-    theta, beta, randomness, slopes, validation_log_likelihood, training_log_likelihood = irt(
-        train_data, val_data, lr, iterations)
-
-    if write:
         rows[0] = ["id", "is_correct"]
         for row_index in range(1, len(rows)):
             rows[row_index][2] = predict(int(rows[row_index][0]), int(rows[row_index][1]), theta, beta, randomness, slopes)
@@ -177,6 +179,13 @@ def main():
     iterations_org = 30
     theta_org, beta_org, validation_log_likelihood_org, training_log_likelihood_org = starter_code.part_a.item_response.irt(
         train_data, val_data, lr_org, iterations_org)
+
+    acc_test = evaluate(test_data, theta, beta, randomness, slopes)
+    print("Modified Final Test Score: {}".format(acc_test))
+
+    acc_test = starter_code.part_a.item_response.evaluate(test_data, theta_org, beta_org)
+    print("Original Final Test Score: {}".format(acc_test))
+    #exit(0)
 
     questions = np.array([200, 1000, 1300])
     #print(randomness[questions])
@@ -197,7 +206,7 @@ def main():
     plt.title("Probablity to theta")
     plt.legend()
     plt.show()
-    exit(0)
+    #exit(0)
 
     plt.title("validation log likelihood")
     plt.xlabel("iteration")
@@ -215,11 +224,6 @@ def main():
     plt.legend()
     plt.show()
 
-    acc_test = evaluate(test_data, theta, beta, randomness, slopes)
-    print("Modified Final Test Score: {}".format(acc_test))
-
-    acc_test = starter_code.part_a.item_response.evaluate(test_data, theta_org, beta_org)
-    print("Original Final Test Score: {}".format(acc_test))
 
 
 if __name__ == "__main__":
