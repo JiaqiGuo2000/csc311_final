@@ -150,7 +150,7 @@ def main():
     val_data = load_valid_csv("../data")
     test_data = load_public_test_csv("../data")
 
-    write = True
+    write = False
     lr = 0.015
     iterations = 25
     theta, beta, randomness, slopes, validation_log_likelihood, training_log_likelihood = irt(
