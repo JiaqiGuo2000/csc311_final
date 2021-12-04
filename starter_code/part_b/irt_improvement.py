@@ -3,6 +3,7 @@ import starter_code.part_a.item_response
 
 import numpy as np
 import matplotlib.pyplot as plt
+import csv
 
 
 def sigmoid(x):
@@ -134,20 +135,69 @@ def evaluate(data, theta, beta, randomness, slopes):
            / len(data["is_correct"])
 
 
+def predict(question_id, user_id, theta, beta, randomness, slopes):
+    x = (theta[user_id] - beta[question_id]).sum() * slopes[question_id]
+    p_a = sigmoid(x) * (1 - randomness[question_id]) + randomness[question_id]
+    return str(int(p_a >= 0.5))
+
+
 def main():
     train_data = load_train_csv("../data")
     val_data = load_valid_csv("../data")
     test_data = load_public_test_csv("../data")
+
+    write = False
+    if write:
+        rows = []
+        with open('../data/private_test_data.csv') as f:
+            f_csv = csv.reader(f)
+            for row in f_csv:
+                #print(row)
+                rows.append(row)
 
     lr = 0.015
     iterations = 46
     theta, beta, randomness, slopes, validation_log_likelihood, training_log_likelihood = irt(
         train_data, val_data, lr, iterations)
 
+    if write:
+        rows[0] = ["id", "is_correct"]
+        for row_index in range(1, len(rows)):
+            rows[row_index][2] = predict(int(rows[row_index][0]), int(rows[row_index][1]), theta, beta, randomness, slopes)
+            rows[row_index] = [row_index, rows[row_index][2]]
+
+        print(rows)
+        with open('../data/private_test_data_upload.csv', 'w', newline='') as f:
+            f_csv = csv.writer(f)
+            #f_csv.writerow(headers)
+            f_csv.writerows(rows)
+            exit(0)
+
     lr_org = 0.01
     iterations_org = 30
     theta_org, beta_org, validation_log_likelihood_org, training_log_likelihood_org = starter_code.part_a.item_response.irt(
         train_data, val_data, lr_org, iterations_org)
+
+    questions = np.array([200, 1000, 1300])
+    #print(randomness[questions])
+    #print(slopes[questions])
+    theta = theta.reshape(-1)
+    theta.sort()
+    for question in questions:
+        e = np.exp(theta - beta[question])
+        plt.plot(theta, e / (1 + e), label="Question {} Modified".format(question))
+
+    theta_org = theta_org.reshape(-1)
+    theta_org.sort()
+    for question in questions:
+        e = np.exp(theta_org - beta_org[question])
+        plt.plot(theta_org, e / (1 + e), label="Question {} Original".format(question))
+    plt.ylabel("Probability")
+    plt.xlabel("Theta")
+    plt.title("Probablity to theta")
+    plt.legend()
+    plt.show()
+    exit(0)
 
     plt.title("validation log likelihood")
     plt.xlabel("iteration")
